@@ -1,5 +1,5 @@
 # Obolus
-An open source XS2A example implementation for various PSD2 compliant standards
+An open source XS2A example implementation for various PSD2 compliant standards for ASPSP/Bank side implementation
 
 ## rest
 Basic REST interface for communication between a TPP client and ASPSP
