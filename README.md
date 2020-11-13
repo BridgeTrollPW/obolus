@@ -12,4 +12,4 @@ An ASPSP can implement this abstraction layer as i/o interface between the alrea
 ## bridge-xs2a
 Abstraction layer for standard specific input and output resources at the REST interface.
 
-Obolus
+Obolus can use interchangeable models and data structure for input and ouput on the REST interface. That means, obolus can consume or produce input/output for any number of xs2a related data structures, like the BerlinGroup.
