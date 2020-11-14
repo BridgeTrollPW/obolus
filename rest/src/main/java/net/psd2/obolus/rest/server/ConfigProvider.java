@@ -7,15 +7,17 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.psd2.obolus.rest.cache.boundary.IQuery;
-import net.psd2.obolus.rest.cache.boundary.IQueryExpireLazy;
-import net.psd2.obolus.rest.cache.boundary.IQueryResult;
-import net.psd2.obolus.rest.cache.boundary.IQueryable;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryExpireLazy;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryObject;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryRefresh;
 
-public class ConfigProvider
-        implements IQueryable<ConfigProvider,ConfigProvider>, IQueryExpireLazy, IQueryResult, IQuery {
-    public static final Logger logger = LogManager.getLogger(ConfigProvider.class);
+public class ConfigProvider implements ICacheEntryObject, ICacheEntryExpireLazy, ICacheEntryRefresh {
+    private static final Logger logger = LogManager.getLogger(ConfigProvider.class);
+
     public static final String PROPERTY_PATH = "obolus.config.path";
+    public static final String PROPERTY_EXPIRE_IN_SECONDS = "rest.configprovider.expireInSeconds";
+
+    private long expiry;
 
     public ConfigProvider() {
         String configuratonFilePath = System.getProperty(PROPERTY_PATH, "application.properties");
@@ -24,23 +26,21 @@ public class ConfigProvider
         } catch (IOException e) {
             logger.error("Unable to load configuration from path={}", configuratonFilePath, e);
         }
+        expiry = Long.parseLong(System.getProperty(PROPERTY_EXPIRE_IN_SECONDS, "120"));
+    }
+
+    /**
+     * Re-reads the configuration file and adds it to the system properties
+     */
+    @Override
+    public ICacheEntryObject refresh() {
+        logger.info("Configuration is refreshed");
+        return new ConfigProvider();
     }
 
     @Override
-    public long expireInSeconds() {
-        // TODO Auto-generated method stub
-        return 500;
-    }
-
-    @Override
-    public ConfigProvider query(ConfigProvider query) {
-        // TODO Auto-generated method stub
-        return this;
-    }
-
-    @Override
-    public void refresh() {
-        // asdas a
+    public long expireAfterSeconds() {
+        return expiry;
     }
 
 }

@@ -1,44 +1,62 @@
 package net.psd2.obolus.rest.cache.control;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.psd2.obolus.rest.cache.boundary.IQuery;
-import net.psd2.obolus.rest.cache.boundary.IQueryResult;
-import net.psd2.obolus.rest.cache.boundary.IQueryable;
-import net.psd2.obolus.rest.cache.entity.CacheEntry;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryExpireLazy;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryObject;
+import net.psd2.obolus.rest.cache.boundary.ICacheEntryRefresh;
+import net.psd2.obolus.rest.cache.entity.CacheEntryWrapper;
 
 public class ObjectBroker {
     private static final Logger logger = LogManager.getLogger(ObjectBroker.class);
-    private List<CacheEntry> cache;
+
+    private Map<Class<? extends ICacheEntryObject>, CacheEntryWrapper> cache;
+
+    // Flags
+    private static final int BITFLAG_EXPIRED = 0b0001;//1
+    private static final int BITFLAG_REFRESH = 0b0010;//2
 
     private ObjectBroker() {
         logger.debug("ObjectBroker new allocation");
-        cache = new ArrayList<>();
+        cache = new HashMap<>();
     }
 
     public static ObjectBroker getInstance() {
-        return HOLDER.Instance;
+        return HOLDER.instance;
     }
 
     private static class HOLDER {
-        private static ObjectBroker Instance = new ObjectBroker();
+        private static final ObjectBroker instance = new ObjectBroker();
     }
 
-    public IQueryResult query(IQuery query) {
-        Optional<CacheEntry> entry = cache.parallelStream()
-                .filter((CacheEntry cacheEntry) -> cacheEntry.getObj().query(query) != null).findFirst();
-//TODO check for optional empty -> Execption
-        return entry.get().getObj().query(query);
+    public void store(ICacheEntryObject newObject) {
+        cache.put(newObject.getClass(), new CacheEntryWrapper(newObject, new Date().getTime()));
     }
 
-    public void cacheNew(IQueryable<? extends IQueryResult,? extends IQuery> obj) {
-        //make type cast safe
-        cache.add(new CacheEntry((IQueryable<IQueryResult, IQuery>) obj, new Date().getTime()));
+    public <T extends ICacheEntryObject> T fetch(Class<? extends T> clazz) {
+        ICacheEntryObject obj = cache.get(clazz).getObject();
+        int flags = 0;
+        if (obj instanceof ICacheEntryExpireLazy) {
+            flags |= BITFLAG_EXPIRED;
+        }
+
+        if (obj instanceof ICacheEntryRefresh) {
+            flags |= BITFLAG_REFRESH;
+        }
+
+        if ((flags & BITFLAG_EXPIRED) == BITFLAG_EXPIRED) {
+            cache.remove(clazz);
+            return null;
+        }
+        if ((flags & BITFLAG_REFRESH) == BITFLAG_REFRESH) {
+            obj = ((ICacheEntryRefresh) obj).refresh();
+            cache.put(clazz, new CacheEntryWrapper(obj, new Date().getTime()));
+        }
+        return (T)obj;
     }
 }

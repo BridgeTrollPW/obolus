@@ -104,7 +104,7 @@
                             <manifest>
                                 <addClasspath>true</addClasspath>
                                 <classpathPrefix>lib/</classpathPrefix>
-                                <mainClass>net.psd2.obolus.rest.Main</mainClass>
+                                <mainClass>net.psd2.obolus.rest.Obolus</mainClass>
                             </manifest>
                         </archive>
                     </configuration>

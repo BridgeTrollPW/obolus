@@ -3,6 +3,7 @@ package net.psd2.obolus.rest.server;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,25 +18,22 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import net.psd2.obolus.rest.cache.control.ObjectBroker;
 import net.psd2.obolus.rest.resource.ecosystem.boundary.Ecosystem;
 
 public class HTTPServer {
     private static final Logger LOG = LogManager.getLogger(HTTPServer.class);
-    private final String ip;
-    private final String port;
-    private Server server = null;
+    private static Server server;
 
-    public HTTPServer() {
-        ObjectBroker.getInstance().cacheNew(new ConfigProvider());
-        this.ip = "127.0.0.1";
-        this.port = "8444";
-    }
+    public static final String PROPERTY_REST_HOST = "rest.host";
+    public static final String PROPERTY_REST_PORT = "rest.port";
 
-    public void startHttpServer() throws Exception {
+    public static void start() throws UnknownHostException {
+        String host = System.getProperty(PROPERTY_REST_HOST, "127.0.0.1");
+        int port = Integer.parseInt(System.getProperty(PROPERTY_REST_PORT, "8448"));
+
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(InetAddress.getByName(ip), Integer.parseInt(port));
+        InetSocketAddress inetSocketAddress = new InetSocketAddress(InetAddress.getByName(host), port);
 
         server = new Server(inetSocketAddress);
         server.setHandler(context);
