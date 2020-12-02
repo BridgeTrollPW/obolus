@@ -18,7 +18,9 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import net.psd2.obolus.rest.middleware.ContentTypeFilter;
 import net.psd2.obolus.rest.resource.ecosystem.boundary.Ecosystem;
+import net.psd2.obolus.rest.resource.pis.boundary.SinglePlaymentResource;
 
 public class HTTPServer {
     private static final Logger LOG = LogManager.getLogger(HTTPServer.class);
@@ -43,6 +45,8 @@ public class HTTPServer {
 
         // Register Resources / REST Endpoints
         config.register(Ecosystem.class);
+        config.register(SinglePlaymentResource.class);
+        config.register(ContentTypeFilter.class);
 
         ServletHolder obolusRoutes = new ServletHolder(new ServletContainer(config));
         context.addServlet(obolusRoutes, "/v1/*");
